@@ -1,2 +1,2 @@
-just download the files, and use python manage.py runserver 
+just download the files, and in the command line, type:  python manage.py runserver 
 then upload the csfaculty.csv to the web, you will see the results.
