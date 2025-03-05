@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>University Rankings based on PhD-Faculty Network</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Add Plotly.js -->
+    <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+    <style>
+        .container { max-width: 1000px; padding: 20px; }  <!-- Increased max-width to accommodate visualization -->
+        .upload-form { margin: 20px 0; padding: 20px; border: 1px solid #ddd; border-radius: 5px; }
+        #visualization { margin-top: 20px; width: 100%; }
+        #rankings { margin-top: 20px; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>University Rankings based on PhD-Faculty Network</h1>
+        <div class="upload-form">
+            <h2>Upload Data</h2>
+            <form id="uploadForm">
+                <input type="file" id="csvFile" accept=".csv" required class="form-control mb-3">
+                <button type="submit" class="btn btn-primary">Upload and Analyze</button>
+            </form>
+        </div>
+        <div id="visualization" style="width: 800px; height: 600px;"></div>
+        <div id="rankings"></div>
+    </div>
+    
+    <script>
+        document.getElementById('uploadForm').onsubmit = async (e) => {
+            e.preventDefault();
+            const formData = new FormData();
+            formData.append('file', document.getElementById('csvFile').files[0]);
+            
+            try {
+                const response = await fetch('/upload/', {
+                    method: 'POST',
+                    body: formData
+                });
+                const data = await response.json();
+                
+                if (data.error) {
+                    alert(data.error);
+                    return;
+                }
+
+                // Create edge traces
+                const edgeTraces = data.visualization.edges.map(edge => ({
+                    x: edge.x,
+                    y: edge.y,
+                    mode: 'lines',
+                    line: {
+                        width: 0.5,
+                        color: '#888'
+                    },
+                    hoverinfo: 'none',
+                    type: 'scatter'
+                }));
+
+                // Create node trace
+                const nodeTrace = {
+                    x: data.visualization.nodes.x,
+                    y: data.visualization.nodes.y,
+                    mode: 'markers+text',
+                    type: 'scatter',
+                    text: data.visualization.nodes.text,
+                    textposition: 'top center',
+                    hoverinfo: 'text',
+                    marker: {
+                        size: 10,
+                        color: '#1f77b4',
+                        line: { width: 2 }
+                    }
+                };
+
+                const layout = {
+                    showlegend: false,
+                    hovermode: 'closest',
+                    margin: { b: 0, l: 0, r: 0, t: 0 },
+                    xaxis: { showgrid: false, zeroline: false, showticklabels: false },
+                    yaxis: { showgrid: false, zeroline: false, showticklabels: false },
+                    width: 800,
+                    height: 600
+                };
+
+                // Combine edge traces and node trace
+                const traces = [...edgeTraces, nodeTrace];
+                Plotly.newPlot('visualization', traces, layout);
+                
+                // Display rankings (if you have a rankings section)
+                // ... existing rankings code ...
+                const rankingsHtml = '<h2>University Rankings</h2>' + 
+                    '<ol>' + 
+                    data.rankings.map(([univ, score]) => 
+                        `<li>${univ}: ${score.toFixed(3)}</li>`
+                    ).join('') + 
+                    '</ol>';
+                document.getElementById('rankings').innerHTML = rankingsHtml;
+                
+            } catch (error) {
+                alert('Error uploading file: ' + error);
+            }
+        };
+    </script>
+</body>
+</html>
